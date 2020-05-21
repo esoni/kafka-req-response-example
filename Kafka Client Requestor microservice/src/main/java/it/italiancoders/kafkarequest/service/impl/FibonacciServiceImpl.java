@@ -41,16 +41,16 @@ public class FibonacciServiceImpl implements FibonacciService {
         String requestJSON = objectMapper.writeValueAsString(request);
         ProducerRecord<String, String> record = new ProducerRecord<String, String>(requestTopic, requestJSON);
         record.headers().add(new RecordHeader(KafkaHeaders.REPLY_TOPIC, requestReplyTopic.getBytes()));
+
         RequestReplyFuture<String, String, String> sendAndReceive = kafkaTemplate.sendAndReceive(record);
-        // confirm if producer produced successfully
         SendResult<String, String> sendResult = sendAndReceive.getSendFuture().get();
         log.info("ProducerRecord request[{}]", sendResult.getProducerRecord());
-        sendResult.getProducerRecord().headers().forEach(header -> System.out.println(header.key() + ":" + header.value().toString()));
-        // get consumer record
+
         ConsumerRecord<String, String> consumerRecord = sendAndReceive.get();
+        log.info("ConsumerRecord request[{}]", consumerRecord);
+
         String jsonResponse = consumerRecord.value();
 
-        // return consumer value
         return objectMapper.readValue(jsonResponse, FibonacciResult.class);
     }
 }
